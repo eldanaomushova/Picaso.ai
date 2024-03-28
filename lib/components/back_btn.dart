@@ -7,22 +7,20 @@ class BackButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      child: Stack(
-        children: [
-          Positioned(
-            top: 50,
-            left: 32,
-            child: GestureDetector(
-              onTap: () {
-                Navigator.of(context).push(MaterialPageRoute(builder: (_) => IntroPage()));
-              },
-              child: const Icon(
-                Icons.arrow_back_ios,
-                size: 34,
+      child: Center(
+        child: Stack(
+          children: [
+              GestureDetector(
+                onTap: () {
+                  Navigator.of(context).push(MaterialPageRoute(builder: (_) => IntroPage()));
+                },
+                child: const Icon(
+                  Icons.arrow_back_ios,
+                  size: 34,
+                ),
               ),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
