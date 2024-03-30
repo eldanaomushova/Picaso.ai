@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/styles/colors.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'dart:io' show Platform;
 
@@ -11,96 +10,98 @@ class ConnectionPage extends StatefulWidget {
 }
 
 class _ConnectionPageState extends State<ConnectionPage> {
-  bool _isScanning = false; // Initialize to false
+  bool _isScanning = false;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: Text('Bluetooth Device Scanner'),
+      ),
       body: Container(
-        color: AppStyles.mainCcolor,
-        child: Stack(
+        padding: EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Align(
-              alignment: Alignment.topCenter,
-              child: Padding(
-                padding: const EdgeInsets.only(top: 32),
-                child: Image.asset(
-                  'lib/images/logo_light.png',
-                  width: 150,
-                  height: 150,
-                ),
-              ),
+            ElevatedButton(
+              onPressed: _toggleScan,
+              child: Text(_isScanning ? 'Stop Scanning' : 'Start Scanning'),
             ),
-            const Padding(
-              padding: EdgeInsets.fromLTRB(0.0, 50, 40, 30),
-              child: BackButton(color: Colors.black),
-            ),
-            Align(
-              alignment: Alignment.center,
-              child: Padding(
-                padding: const EdgeInsets.all(14.0),
-                child: Text(
-                  "Please turn on the Bluetooth and do connection",
-                  textAlign: TextAlign.center,
-                  style: AppStyles.mainText.copyWith(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: Padding(
-                padding: const EdgeInsets.only(bottom: 52),
-                child: Tooltip(
-                  message: _isScanning ? 'Stop scanning' : 'Start scanning', 
-                  child: ElevatedButton(
-                    onPressed: () async {
-                      print("scanning");
-                      if (_isScanning) {
-                        await FlutterBluePlus.stopScan();
-                      } else {
-                        await FlutterBluePlus.startScan();
-                      }
-                      setState(() {
-                        _isScanning = !_isScanning; // Toggle the value of _isScanning
-                      });
-                    },
-
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Color.fromARGB(255, 40, 40, 40),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        side: const BorderSide(
-                          color: Colors.white,
-                          width: 1,
-                        ),
-                      ),
-                    ),
-                    child: StreamBuilder<bool>(
-                      stream: FlutterBluePlus.isScanning,
-                      builder: (context, snapshot) {
-                        if (snapshot.hasError) {
-                          return Text('Error: ${snapshot.error}');
-                        }
-
-                        if (snapshot.hasData) {
-                          final isScanning = snapshot.data!;
-                          _isScanning = isScanning;
-                          return Icon(isScanning ? Icons.stop : Icons.play_arrow);
-                        }
-
-                        return CircularProgressIndicator(); 
-                      },
-                    ),
-                  ),
-                ),
-              ),
+            SizedBox(height: 16.0),
+            Expanded(
+              child: _buildDeviceList(),
             ),
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _toggleScan() async {
+    setState(() {
+      _isScanning = !_isScanning;
+    });
+
+    if (_isScanning) {
+      await _startScan();
+    } else {
+      await _stopScan();
+    }
+  }
+
+  Future<void> _startScan() async {
+    if (Platform.isAndroid) {
+      await FlutterBluePlus.turnOn();
+    }
+
+    await FlutterBluePlus.adapterState
+        .firstWhere((state) => state == BluetoothAdapterState.on);
+
+    await FlutterBluePlus.startScan();
+  }
+
+  Future<void> _stopScan() async {
+    await FlutterBluePlus.stopScan();
+  }
+
+  Widget _buildDeviceList() {
+    return StreamBuilder<List<ScanResult>>(
+      stream: FlutterBluePlus.scanResults,
+      initialData: [],
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(child: CircularProgressIndicator());
+        }
+
+        final devices = snapshot.data!;
+        if (devices.isEmpty) {
+          return Center(child: Text('No devices found'));
+        }
+
+        return ListView.builder(
+          itemCount: devices.length,
+          itemBuilder: (context, index) {
+            final device = devices[index].device;
+            return ListTile(
+              title: Text(device.name.isEmpty ? 'Unknown Device' : device.name),
+              subtitle: Text(device.id.toString()),
+              onTap: (){
+                
+                _connectToDevice(device);
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _connectToDevice(BluetoothDevice device) async {
+    try {
+      await device.connect();
+      print('Connected to device: ${device.name}');
+    } catch (e) {
+      print('Error connecting to device: $e');
+    }
   }
 }
