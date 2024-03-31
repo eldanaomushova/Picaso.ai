@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/pages/aigeneration_page.dart';
@@ -46,12 +47,14 @@ class HomePage extends StatelessWidget {
             child: ElevatedButton(
               onPressed: () async {
                 final pickedImage = await ImagePicker().pickImage(source: ImageSource.gallery);
-                if(pickedImage != null){
-                  Navigator.push(context, 
-                  MaterialPageRoute(builder: (context) => ImageUpload(imageFile: File(pickedImage.path)),)
+                if (pickedImage != null && context != null) { // Add null check for context
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => ImageUpload(imageFile: File(pickedImage.path))),
                   );
                 }
               },
+
               style: ElevatedButton.styleFrom(
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(1.0),
@@ -67,6 +70,7 @@ class HomePage extends StatelessWidget {
               ),
             ),
           ),
+
           const SizedBox(height: 30),
           SizedBox(
             width: 350, 
