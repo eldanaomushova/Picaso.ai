@@ -1,6 +1,11 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/pages/aigeneration_page.dart';
+import 'package:flutter_application_1/pages/imageUpload_page.dart';
 import 'package:flutter_application_1/styles/colors.dart';
+import 'package:image_picker/image_picker.dart';
+
 
 class HomePage extends StatelessWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -39,8 +44,13 @@ class HomePage extends StatelessWidget {
           SizedBox(
             width: 350, 
             child: ElevatedButton(
-              onPressed: () {
-                // Add your button onPressed logic here
+              onPressed: () async {
+                final pickedImage = await ImagePicker().pickImage(source: ImageSource.gallery);
+                if(pickedImage != null){
+                  Navigator.push(context, 
+                  MaterialPageRoute(builder: (context) => ImageUpload(imageFile: File(pickedImage.path)),)
+                  );
+                }
               },
               style: ElevatedButton.styleFrom(
                 shape: RoundedRectangleBorder(
