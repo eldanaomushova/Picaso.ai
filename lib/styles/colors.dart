@@ -15,5 +15,7 @@ class AppStyles {
   static const TextStyle buttonUpld = TextStyle(
     fontFamily: 'Roboto', 
     fontWeight: FontWeight.w300, 
+    fontSize: 36,
+    color: Colors.white
   );
 }

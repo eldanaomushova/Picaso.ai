@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/pages/home_page.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'dart:io' show Platform;
 
@@ -16,10 +17,10 @@ class _ConnectionPageState extends State<ConnectionPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Bluetooth Device Scanner'),
+        title: const Text('Bluetooth Device Scanner'),
       ),
       body: Container(
-        padding: EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -27,7 +28,19 @@ class _ConnectionPageState extends State<ConnectionPage> {
               onPressed: _toggleScan,
               child: Text(_isScanning ? 'Stop Scanning' : 'Start Scanning'),
             ),
-            SizedBox(height: 16.0),
+
+
+            //move it, after checking connection page
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => HomePage()),
+                );
+              },
+              child: Text('Home Page'),
+            ),
+            const SizedBox(height: 16.0),
             Expanded(
               child: _buildDeviceList(),
             ),
