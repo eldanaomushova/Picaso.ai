@@ -47,10 +47,14 @@ class HomePage extends StatelessWidget {
             child: ElevatedButton(
               onPressed: () async {
                 final pickedImage = await ImagePicker().pickImage(source: ImageSource.gallery);
-                if (pickedImage != null && context != null) { // Add null check for context
+                if (pickedImage != null) { 
+                  // Navigator.push(
+                  //   context,
+                  //   MaterialPageRoute(builder: (context) => ImageUpload(imageFile: File(pickedImage.path))),
+                  // );
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => ImageUpload(imageFile: File(pickedImage.path))),
+                    MaterialPageRoute(builder: (context) => ImageUpload())
                   );
                 }
               },

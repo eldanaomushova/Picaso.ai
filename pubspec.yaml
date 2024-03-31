@@ -34,6 +34,8 @@ dependencies:
   flutter_blue_plus: ^1.30.3
   image: ^3.0.1
   flutter_svg: ^0.22.0
+  flutter_js: ^0.8.0
+
 
 
   # The following adds the Cupertino Icons font to your application.
@@ -68,6 +70,7 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
     - lib/images/
+    - lib/assets/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware
