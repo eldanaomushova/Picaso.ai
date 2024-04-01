@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/pages/aigeneration_page.dart';
@@ -52,14 +51,8 @@ class HomePage extends StatelessWidget {
                     context,
                     MaterialPageRoute(builder: (context) => ImageUpload(imageFile: File(pickedImage.path))),
                   );
-
-                  // Navigator.push(
-                  //   context,
-                  //   MaterialPageRoute(builder: (context) => ImageUpload())
-                  // );
                 }
               },
-
               style: ElevatedButton.styleFrom(
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(1.0),
@@ -75,7 +68,6 @@ class HomePage extends StatelessWidget {
               ),
             ),
           ),
-
           const SizedBox(height: 30),
           SizedBox(
             width: 350, 
