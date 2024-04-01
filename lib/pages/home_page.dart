@@ -48,14 +48,15 @@ class HomePage extends StatelessWidget {
               onPressed: () async {
                 final pickedImage = await ImagePicker().pickImage(source: ImageSource.gallery);
                 if (pickedImage != null) { 
-                  // Navigator.push(
-                  //   context,
-                  //   MaterialPageRoute(builder: (context) => ImageUpload(imageFile: File(pickedImage.path))),
-                  // );
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => ImageUpload())
+                    MaterialPageRoute(builder: (context) => ImageUpload(imageFile: File(pickedImage.path))),
                   );
+
+                  // Navigator.push(
+                  //   context,
+                  //   MaterialPageRoute(builder: (context) => ImageUpload())
+                  // );
                 }
               },
 
