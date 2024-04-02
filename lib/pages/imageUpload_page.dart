@@ -14,36 +14,27 @@ class ImageUpload extends StatefulWidget {
 class _ImageUploadState extends State<ImageUpload> {
   File? imageFile;
   String? gcode;
+  static const String baseUrl = "http://your-server-address:port/convert";
 
   Future<void> pickImage() async {
     final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
       setState(() {
-        imageFile = File('lib/images/logoSvg.svg');
+        imageFile = File(pickedFile.path);
       });
     }
   }
 
   Future<String?> convertImageToGcode(File? imageFile) async {
-    try {
-      if (imageFile == null) return null;
-
-      final url = Uri.parse('http://localhost:5000/convert');
-      final request = http.MultipartRequest('POST', url);
-      request.files.add(
-        await http.MultipartFile.fromPath('image', imageFile.path),
-      );
-      final streamedResponse = await request.send();
-      if (streamedResponse.statusCode == 200) {
-        final response = await streamedResponse.stream.bytesToString();
-        final data = jsonDecode(response);
-        return data['gcode'] as String?;
-      } else {
-        print('Error converting image: ${streamedResponse.statusCode}');
-        return null;
-      }
-    } catch (e) {
-      print('Error converting image: $e');
+    if (imageFile == null) return null;
+    var request = http.MultipartRequest('POST', Uri.parse(baseUrl));
+    request.files.add(http.MultipartFile.fromPath('image', imageFile.path) as http.MultipartFile);
+    var response = await request.send();
+    if (response.statusCode == 200) {
+      var responseData = await response.stream.bytesToString();
+      return responseData;
+    } else {
+      print('Error converting image: ${response.reasonPhrase}');
       return null;
     }
   }
