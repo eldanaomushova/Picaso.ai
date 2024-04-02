@@ -1,124 +1,89 @@
+import 'dart:convert';
 import 'dart:io';
-
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import 'package:xml/xml.dart' as xml;
+import 'package:image_picker/image_picker.dart';
+import 'package:http/http.dart' as http;
 
 class ImageUpload extends StatefulWidget {
-  final File imageFile;
-  const ImageUpload({Key? key, required this.imageFile}) : super(key: key);
+  const ImageUpload({Key? key, required File imageFile}) : super(key: key);
+
   @override
   _ImageUploadState createState() => _ImageUploadState();
 }
 
 class _ImageUploadState extends State<ImageUpload> {
-  String? svgString;
-  List<String> pathAttributes = [];
-  List<String>? gcodeCommands;
+  File? imageFile;
+  String? gcode;
+
+  Future<void> pickImage() async {
+    final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() {
+        imageFile = File('lib/images/logoSvg.svg');
+      });
+    }
+  }
+
+  Future<String?> convertImageToGcode(File? imageFile) async {
+    try {
+      if (imageFile == null) return null;
+
+      final url = Uri.parse('http://localhost:5000/convert');
+      final request = http.MultipartRequest('POST', url);
+      request.files.add(
+        await http.MultipartFile.fromPath('image', imageFile.path),
+      );
+      final streamedResponse = await request.send();
+      if (streamedResponse.statusCode == 200) {
+        final response = await streamedResponse.stream.bytesToString();
+        final data = jsonDecode(response);
+        return data['gcode'] as String?;
+      } else {
+        print('Error converting image: ${streamedResponse.statusCode}');
+        return null;
+      }
+    } catch (e) {
+      print('Error converting image: $e');
+      return null;
+    }
+  }
 
   @override
-  void initState() {
-    super.initState();
-    loadSvgString(widget.imageFile);
-  }
-
-  void loadSvgString(File imageFile) async {
-  if (imageFile != null) {
-    try {
-      final content = await imageFile.readAsString();
-      final document = xml.XmlDocument.parse(content);
-      for (var element in document.findAllElements('path')) {
-        final attribute = element.getAttribute('d');
-        if (attribute != null) {
-          pathAttributes.add(attribute);
-        } else {
-          continue;
-        }
-      }
-      print(pathAttributes);
-      setState(() {
-        svgString = content;
-      });
-    } catch (e) {
-      print('Error loading SVG file: $e');
-    }
-  } else {
-    print('Image file is null');
-  }
-}
-
-  void convertSvg2Gcode(List<String> pathAttributes) {
-  if (pathAttributes.isNotEmpty) {
-    final gcodeCommands = <String>[];
-    for (var path in pathAttributes) {
-      final pathCommands = path.split(RegExp(r'[a-zA-Z]'));
-      final coordinates = path.split(RegExp(r'[ ,]'));
-      for (var i = 0; i < pathCommands.length; i++) {
-        final command = pathCommands[i];
-        final coordX = double.tryParse(coordinates[i * 2]);
-        final coordY = double.tryParse(coordinates[i * 2 + 1]);
-
-        final gcodeCommand = convertCommandToGcode(command, coordX!, coordY!);
-        if (gcodeCommand != null) {
-          gcodeCommands.add(gcodeCommand);
-        }
-      }
-    }
-    setState(() {
-      this.gcodeCommands = gcodeCommands;
-    });
-    print('GCode Commands:');
-    gcodeCommands.forEach((command) {
-      print(command);
-    });
-  } else {
-    setState(() {
-      this.gcodeCommands = [];
-    });
-  }
-}
-
-
-
-  String? convertCommandToGcode(String command, double x, double y) {
-    switch (command.toLowerCase()) {
-      case 'm':
-        return 'G00 X$x Y$y';
-      case 'l':
-        return 'G01 X$x Y$y';
-      case 'c':
-        break;
-      case 'z':
-        return 'G00 Z0';
-      default:
-        print('Unsupported SVG path command: $command');
-        return null;
-    }
-    return null;
-  }
-@override
-Widget build(BuildContext context) {
-  return Scaffold(
-    appBar: AppBar(
-      title: const Text("Display image"),
-    ),
-    body: Column(
-      children: [
-        const SizedBox(height: 100),
-        Expanded(
-          child: gcodeCommands != null ? ListView.builder(
-            itemCount: gcodeCommands!.length,
-            itemBuilder: (context, index) {
-              return ListTile(
-                title: Text(gcodeCommands![index]),
-              );
-            },
-          ) : Center(
-            child: CircularProgressIndicator(), // Display a loading indicator if gcodeCommands is null
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      home: Scaffold(
+        appBar: AppBar(
+          title: Text('Image Upload'),
+        ),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              ElevatedButton(
+                onPressed: pickImage,
+                child: Text('Select Image'),
+              ),
+              SizedBox(height: 20),
+              if (imageFile != null) Text('Selected: ${imageFile!.path}'),
+              SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: imageFile != null
+                    ? () async {
+                        gcode = await convertImageToGcode(imageFile);
+                        if (gcode != null) {
+                          print('G-code received: $gcode');
+                        } else {
+                          print('Error converting image');
+                        }
+                      }
+                    : null,
+                child: Text('Convert Image to G-code'),
+              ),
+              if (gcode != null) Text('G-code: $gcode'),
+            ],
           ),
         ),
-      ],
-    ),
-  );
-}
+      ),
+    );
+  }
 }
