@@ -1,43 +1,55 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart';
 
 class ImageUpload extends StatefulWidget {
-  const ImageUpload({Key? key, required File imageFile}) : super(key: key);
+  late File imageFile;
+  ImageUpload({Key? key, required this.imageFile}) : super(key: key);
 
   @override
   _ImageUploadState createState() => _ImageUploadState();
 }
 
 class _ImageUploadState extends State<ImageUpload> {
-  File? imageFile;
   String? gcode;
-  static const String baseUrl = "http://your-server-address:port/convert";
+  static const String baseUrl = "http://localhost:3000";
 
   Future<void> pickImage() async {
     final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
       setState(() {
-        imageFile = File(pickedFile.path);
+        widget.imageFile = File(pickedFile.path);
       });
+      convertImageToGcode(widget.imageFile);
     }
   }
 
   Future<String?> convertImageToGcode(File? imageFile) async {
-    if (imageFile == null) return null;
-    var request = http.MultipartRequest('POST', Uri.parse(baseUrl));
-    request.files.add(http.MultipartFile.fromPath('image', imageFile.path) as http.MultipartFile);
-    var response = await request.send();
-    if (response.statusCode == 200) {
-      var responseData = await response.stream.bytesToString();
-      return responseData;
-    } else {
-      print('Error converting image: ${response.reasonPhrase}');
-      return null;
-    }
+  if (imageFile == null) return null;
+
+  List<int> imageBytes = await imageFile.readAsBytes();
+  String base64Image = base64Encode(imageBytes);
+
+  var url = Uri.parse("http://localhost:3000");
+  var response = await http.post(
+    url,
+    body: {
+      'image': base64Image,
+    },
+  );
+
+  if (response.statusCode == 200) {
+    print("Received");
+    return response.body;
+  } else {
+    print('Error converting image: ${response.reasonPhrase}');
+    return null;
   }
+}
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -55,14 +67,17 @@ class _ImageUploadState extends State<ImageUpload> {
                 child: Text('Select Image'),
               ),
               SizedBox(height: 20),
-              if (imageFile != null) Text('Selected: ${imageFile!.path}'),
+              if (widget.imageFile != null) Text('Selected: ${widget.imageFile.path}'),
               SizedBox(height: 20),
               ElevatedButton(
-                onPressed: imageFile != null
+                onPressed: widget.imageFile != null
                     ? () async {
-                        gcode = await convertImageToGcode(imageFile);
+                        gcode = await convertImageToGcode(widget.imageFile);
                         if (gcode != null) {
                           print('G-code received: $gcode');
+                          setState(() {
+                            this.gcode = gcode;
+                          });
                         } else {
                           print('Error converting image');
                         }
